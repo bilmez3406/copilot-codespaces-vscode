@@ -1,0 +1,196 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+#include "Company.generated.h"
+
+UCLASS()
+class FORMATASARIM_API ACompany : public AActor
+{
+    GENERATED_BODY()
+
+public:
+    ACompany();
+
+protected:
+    virtual void BeginPlay() override;
+
+public:
+    virtual void Tick(float DeltaTime) override;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Company Info")
+    FString CompanyName;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Company Info")
+    float Balance;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Company Info")
+    int Employees;
+
+    void EarnMoney(float Amount);
+    void HireEmployee(int Count);
+    void ShowCompanyInfo();
+};
+#include "Company.h"
+
+ACompany::ACompany()
+{
+    PrimaryActorTick.bCanEverTick = true;
+    CompanyName = "FormaTasarım Inc.";
+    Balance = 10000.0f;
+    Employees = 5;
+}
+
+void ACompany::BeginPlay()
+{
+    Super::BeginPlay();
+}
+
+void ACompany::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+}
+
+void ACompany::EarnMoney(float Amount)
+{
+    Balance += Amount;
+    UE_LOG(LogTemp, Warning, TEXT("%s firmasına %f para kazandırıldı. Mevcut bakiye: %f"), *CompanyName, Amount, Balance);
+}
+
+void ACompany::HireEmployee(int Count)
+{
+    Employees += Count;
+    Balance -= Count * 500;
+    UE_LOG(LogTemp, Warning, TEXT("%d yeni çalışan alındı. Çalışan sayısı: %d"), Count, Employees);
+}
+
+void ACompany::ShowCompanyInfo()
+{
+    UE_LOG(LogTemp, Warning, TEXT("Firma: %s, Bakiye: %f, Çalışan Sayısı: %d"), *CompanyName, Balance, Employees);
+}
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+#include "MediaFeedback.generated.h"
+
+UCLASS()
+class FORMATASARIM_API AMediaFeedback : public AActor
+{
+    GENERATED_BODY()
+
+public:
+    AMediaFeedback();
+
+protected:
+    virtual void BeginPlay() override;
+
+public:
+    virtual void Tick(float DeltaTime) override;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Media Feedback")
+    float SocialMediaRating;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Media Feedback")
+    float TraditionalMediaRating;
+
+    void GetMediaFeedback(float SocialMedia, float TraditionalMedia);
+    void ApplyMediaEffect(ACompany* Company);
+};
+#include "MediaFeedback.h"
+#include "Company.h"
+
+AMediaFeedback::AMediaFeedback()
+{
+    PrimaryActorTick.bCanEverTick = true;
+    SocialMediaRating = 0.0f;
+    TraditionalMediaRating = 0.0f;
+}
+
+void AMediaFeedback::BeginPlay()
+{
+    Super::BeginPlay();
+}
+
+void AMediaFeedback::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+}
+
+void AMediaFeedback::GetMediaFeedback(float SocialMedia, float TraditionalMedia)
+{
+    SocialMediaRating = SocialMedia;
+    TraditionalMediaRating = TraditionalMedia;
+    UE_LOG(LogTemp, Warning, TEXT("Sosyal Medya Puanı: %f, Geleneksel Medya Puanı: %f"), SocialMediaRating, TraditionalMediaRating);
+}
+
+void AMediaFeedback::ApplyMediaEffect(ACompany* Company)
+{
+    float Effect = (SocialMediaRating + TraditionalMediaRating) / 2;
+    Company->EarnMoney(Effect * 100);
+}
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+#include "Company.h"
+#include "MediaFeedback.h"
+#include "GameManager.generated.h"
+
+UCLASS()
+class FORMATASARIM_API AGameManager : public AActor
+{
+    GENERATED_BODY()
+
+public:
+    AGameManager();
+
+protected:
+    virtual void BeginPlay() override;
+
+public:
+    virtual void Tick(float DeltaTime) override;
+
+    ACompany* Company;
+    AMediaFeedback* MediaFeedback;
+
+    void SimulateGame();
+};
+#include "GameManager.h"
+#include "Company.h"
+#include "MediaFeedback.h"
+
+AGameManager::AGameManager()
+{
+    PrimaryActorTick.bCanEverTick = true;
+}
+
+void AGameManager::BeginPlay()
+{
+    Super::BeginPlay();
+
+    // Yeni şirket ve medya etkileşimlerini başlatıyoruz
+    Company = GetWorld()->SpawnActor<ACompany>(ACompany::StaticClass());
+    MediaFeedback = GetWorld()->SpawnActor<AMediaFeedback>(AMediaFeedback::StaticClass());
+}
+
+void AGameManager::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+    
+    // Oyunu simüle ediyoruz
+    SimulateGame();
+}
+
+void AGameManager::SimulateGame()
+{
+    // Firma gelirini artır
+    Company->EarnMoney(100.0f);
+
+    // Medya etkileşimini uygula
+    MediaFeedback->GetMediaFeedback(4.5f, 3.8f);
+    MediaFeedback->ApplyMediaEffect(Company);
+
+    // Firma bilgilerini göster
+    Company->ShowCompanyInfo();
+}
